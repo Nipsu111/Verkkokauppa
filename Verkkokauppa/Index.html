@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+    <head lang="fi">
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="Index.css">
+        <script src="Index.js"></script>
+    </head>
+    <body>
+        <div class="topnav">
+            <a onclick="showPage('koti')">Koti</a>
+            <a onclick="showPage('hallinta')">Hallintapaneeli</a>
+            <div class="search-container">
+                <form action="Index.php" method="post">
+                    <input type="text" placeholder="Hae tuotetta..." name="haku" pattern="[A-Za-z0-9 åäöÅÄÖ+\-]+">
+                </form>
+            </div>
+        </div>
+        <div id="koti" class="page">
+        </div>
+        <div id="hallinta" class="page">
+        </div>
+    </body>    
+</html>
