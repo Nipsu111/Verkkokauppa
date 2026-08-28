@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: 11.06.2026 klo 14:09
+-- Generation Time: 28.08.2026 klo 09:55
 -- Palvelimen versio: 10.4.32-MariaDB
 -- PHP Version: 8.0.30
 
@@ -24,6 +24,25 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
+-- Rakenne taululle `myynti`
+--
+
+CREATE TABLE `myynti` (
+  `myynti_id` int(11) NOT NULL,
+  `myynti` varchar(255) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Vedos taulusta `myynti`
+--
+
+INSERT INTO `myynti` (`myynti_id`, `myynti`) VALUES
+(1, 'kg'),
+(2, 'kpl');
+
+-- --------------------------------------------------------
+
+--
 -- Rakenne taululle `tuoteryhmat`
 --
 
@@ -31,18 +50,18 @@ CREATE TABLE `tuoteryhmat` (
   `id` int(11) NOT NULL,
   `nimi` varchar(255) NOT NULL,
   `vero_id` int(11) NOT NULL,
-  `myynti` varchar(255) NOT NULL
+  `myynti_id` int(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Vedos taulusta `tuoteryhmat`
 --
 
-INSERT INTO `tuoteryhmat` (`id`, `nimi`, `vero_id`, `myynti`) VALUES
-(1, 'ruuvit', 1, '€/kg'),
-(2, 'hedelmät', 2, '€/kg'),
-(3, 'vihannekset', 2, '€/kg'),
-(4, 'tussit', 1, '€/kpl');
+INSERT INTO `tuoteryhmat` (`id`, `nimi`, `vero_id`, `myynti_id`) VALUES
+(1, 'ruuvit', 1, 1),
+(2, 'hedelmät', 2, 1),
+(3, 'vihannekset', 2, 1),
+(4, 'tussit', 1, 2);
 
 -- --------------------------------------------------------
 
@@ -238,11 +257,186 @@ INSERT INTO `tuotteet` (`id`, `tuoteryhma_id`, `nimi`, `hinta`, `ean`, `kuva`) V
 -- --------------------------------------------------------
 
 --
+-- Rakenne taululle `varasto`
+--
+
+CREATE TABLE `varasto` (
+  `varasto_id` int(11) NOT NULL,
+  `tuotteet_id` int(11) NOT NULL,
+  `varastossa` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Vedos taulusta `varasto`
+--
+
+INSERT INTO `varasto` (`varasto_id`, `tuotteet_id`, `varastossa`) VALUES
+(1, 4, 84250),
+(2, 5, 96000),
+(3, 6, 97500),
+(4, 7, 97500),
+(5, 8, 95550),
+(6, 9, 97500),
+(7, 10, 99250),
+(8, 11, 96750),
+(9, 12, 98500),
+(10, 13, 98500),
+(11, 14, 97750),
+(12, 15, 97500),
+(13, 16, 96500),
+(14, 17, 96250),
+(15, 18, 99000),
+(16, 19, 97800),
+(17, 20, 100000),
+(18, 21, 98500),
+(19, 22, 97000),
+(20, 23, 100000),
+(21, 24, 100000),
+(22, 25, 100000),
+(23, 26, 100000),
+(24, 27, 100000),
+(25, 28, 100000),
+(26, 29, 99000),
+(27, 30, 100000),
+(28, 31, 98500),
+(29, 32, 100000),
+(30, 33, 96750),
+(31, 34, 100000),
+(33, 36, 98500),
+(34, 37, 96500),
+(35, 38, 98000),
+(36, 39, 98750),
+(37, 40, 100000),
+(38, 41, 100000),
+(39, 42, 100000),
+(40, 43, 100000),
+(41, 44, 100000),
+(42, 45, 100000),
+(43, 46, 98850),
+(44, 47, 97000),
+(45, 48, 100000),
+(46, 49, 97500),
+(47, 50, 100000),
+(48, 51, 100000),
+(50, 54, 100000),
+(51, 55, 100000),
+(52, 56, 100000),
+(53, 57, 100000),
+(55, 59, 100000),
+(56, 60, 100000),
+(57, 61, 100000),
+(58, 62, 100000),
+(59, 63, 100000),
+(60, 64, 100000),
+(61, 65, 100000),
+(62, 66, 100000),
+(63, 67, 100000),
+(64, 68, 100000),
+(65, 69, 100000),
+(66, 70, 100000),
+(67, 71, 100000),
+(68, 72, 100000),
+(69, 73, 100000),
+(70, 74, 100000),
+(71, 75, 99500),
+(72, 76, 100000),
+(73, 77, 100000),
+(74, 78, 100000),
+(75, 79, 99000),
+(76, 80, 100000),
+(77, 81, 100000),
+(78, 82, 100000),
+(79, 83, 100000),
+(80, 84, 100000),
+(81, 85, 100000),
+(82, 86, 100000),
+(83, 87, 100000),
+(84, 88, 100000),
+(85, 89, 100000),
+(86, 90, 100000),
+(87, 91, 100000),
+(88, 92, 100000),
+(89, 93, 100000),
+(90, 94, 100000),
+(91, 95, 100000),
+(92, 96, 100000),
+(93, 97, 100000),
+(94, 98, 100000),
+(95, 99, 100000),
+(96, 100, 100000),
+(97, 101, 100000),
+(98, 102, 100000),
+(99, 103, 100000),
+(100, 104, 100000),
+(101, 105, 100000),
+(102, 106, 100000),
+(103, 107, 100000),
+(104, 108, 100000),
+(105, 109, 100000),
+(106, 110, 100000),
+(107, 111, 100000),
+(108, 112, 100000),
+(109, 113, 100000),
+(110, 114, 100000),
+(111, 115, 100000),
+(112, 116, 100000),
+(113, 117, 100000),
+(114, 118, 100000),
+(115, 119, 100000),
+(116, 120, 100000),
+(117, 121, 100000),
+(118, 122, 100000),
+(119, 123, 100000),
+(120, 124, 100000),
+(121, 125, 100000),
+(122, 126, 100000),
+(123, 127, 100000),
+(124, 128, 100000),
+(125, 129, 100000),
+(126, 130, 100000),
+(127, 131, 100000),
+(128, 132, 100000),
+(129, 133, 100000),
+(130, 134, 100000),
+(131, 135, 100000),
+(132, 136, 100000),
+(133, 137, 100000),
+(134, 138, 100000),
+(135, 139, 100000),
+(136, 140, 100000),
+(137, 141, 100000),
+(138, 142, 100000),
+(139, 143, 100000),
+(140, 144, 100000),
+(141, 145, 100000),
+(142, 146, 100000),
+(143, 147, 100000),
+(144, 148, 100000),
+(145, 149, 100000),
+(146, 150, 100000),
+(147, 151, 100000),
+(148, 152, 100000),
+(149, 153, 100000),
+(150, 154, 100000),
+(151, 155, 100000),
+(152, 156, 100000),
+(153, 157, 100000),
+(154, 158, 100000),
+(155, 159, 100000),
+(156, 160, 100000),
+(157, 161, 100000),
+(158, 163, 82),
+(159, 164, 82),
+(160, 165, 80);
+
+-- --------------------------------------------------------
+
+--
 -- Rakenne taululle `vero`
 --
 
 CREATE TABLE `vero` (
-  `id` int(11) NOT NULL,
+  `vero_id` int(11) NOT NULL,
   `nimi` varchar(100) NOT NULL,
   `prosentti` decimal(5,2) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -251,7 +445,7 @@ CREATE TABLE `vero` (
 -- Vedos taulusta `vero`
 --
 
-INSERT INTO `vero` (`id`, `nimi`, `prosentti`) VALUES
+INSERT INTO `vero` (`vero_id`, `nimi`, `prosentti`) VALUES
 (1, 'Yleinen verokanta', 25.50),
 (2, 'Alennettu verokanta', 13.50),
 (3, 'Alennettu verokanta', 10.00),
@@ -260,6 +454,12 @@ INSERT INTO `vero` (`id`, `nimi`, `prosentti`) VALUES
 --
 -- Indexes for dumped tables
 --
+
+--
+-- Indexes for table `myynti`
+--
+ALTER TABLE `myynti`
+  ADD PRIMARY KEY (`myynti_id`);
 
 --
 -- Indexes for table `tuoteryhmat`
@@ -277,14 +477,27 @@ ALTER TABLE `tuotteet`
   ADD KEY `fk_tuotteet_tuoteryhma_fk2` (`tuoteryhma_id`);
 
 --
+-- Indexes for table `varasto`
+--
+ALTER TABLE `varasto`
+  ADD PRIMARY KEY (`varasto_id`),
+  ADD KEY `fk_varasto_tuotteet` (`tuotteet_id`);
+
+--
 -- Indexes for table `vero`
 --
 ALTER TABLE `vero`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`vero_id`);
 
 --
 -- AUTO_INCREMENT for dumped tables
 --
+
+--
+-- AUTO_INCREMENT for table `myynti`
+--
+ALTER TABLE `myynti`
+  MODIFY `myynti_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `tuoteryhmat`
@@ -299,10 +512,16 @@ ALTER TABLE `tuotteet`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=166;
 
 --
+-- AUTO_INCREMENT for table `varasto`
+--
+ALTER TABLE `varasto`
+  MODIFY `varasto_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=161;
+
+--
 -- AUTO_INCREMENT for table `vero`
 --
 ALTER TABLE `vero`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `vero_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- Rajoitteet vedostauluille
@@ -312,7 +531,7 @@ ALTER TABLE `vero`
 -- Rajoitteet taululle `tuoteryhmat`
 --
 ALTER TABLE `tuoteryhmat`
-  ADD CONSTRAINT `fk_tuoteryhmat_vero` FOREIGN KEY (`vero_id`) REFERENCES `vero` (`id`);
+  ADD CONSTRAINT `fk_tuoteryhmat_vero` FOREIGN KEY (`vero_id`) REFERENCES `vero` (`vero_id`);
 
 --
 -- Rajoitteet taululle `tuotteet`
@@ -321,6 +540,12 @@ ALTER TABLE `tuotteet`
   ADD CONSTRAINT `fk_tuotteet_tuoteryhma` FOREIGN KEY (`tuoteryhma_id`) REFERENCES `tuoteryhmat` (`id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_tuotteet_tuoteryhma_fk` FOREIGN KEY (`tuoteryhma_id`) REFERENCES `tuoteryhmat` (`id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_tuotteet_tuoteryhma_fk2` FOREIGN KEY (`tuoteryhma_id`) REFERENCES `tuoteryhmat` (`id`) ON UPDATE CASCADE;
+
+--
+-- Rajoitteet taululle `varasto`
+--
+ALTER TABLE `varasto`
+  ADD CONSTRAINT `fk_varasto_tuotteet` FOREIGN KEY (`tuotteet_id`) REFERENCES `tuotteet` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

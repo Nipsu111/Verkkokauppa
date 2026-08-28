@@ -5,19 +5,21 @@
         <link rel="stylesheet" href="Index.css">
         <script src="Index.js"></script>
     </head>
-    <body>
+    <body onload="showPage('koti')">
         <div class="topnav">
             <a onclick="showPage('koti')">Koti</a>
+            <a onclick="showPage('osto')">Ostoskori</a>
             <a onclick="showPage('hallinta')">Hallintapaneeli</a>
-            <div class="search-container">
-                <form action="Index.php" method="post">
+            <div id="search" class="search">
+                <form onsubmit="showPage('haku')">
                     <input type="text" placeholder="Hae tuotetta..." name="haku" pattern="[A-Za-z0-9 åäöÅÄÖ+\-]+">
                 </form>
             </div>
         </div>
-        <div id="koti" class="page">
-        </div>
-        <div id="hallinta" class="page">
-        </div>
+        <div id="koti" class="page"></div>
+        <div id="osto" class="page"></div>
+        <div id="hallinta" class="page"></div>
+        <div id="haku" class="page"></div>
+        <div id="modal" class="modal"></div>
     </body>    
 </html>

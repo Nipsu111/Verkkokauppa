@@ -13,13 +13,14 @@ if ($conn->connect_error) {
 $allowed = '/^[A-Za-z0-9 åäöÅÄÖ+\-_]+$/u';
 
 foreach ($_POST as $key => $value) {
-    if ($key === 'show') continue;
+    if ($key === 'show' || $key === 'kassa' || $key === 'osto') continue;
     if (!preg_match($allowed, $value)) {
         die("Yritä uudelleen.");
     }
 }
 
-
+$osto = $_POST['osto'] ?? null;
+$kassa = $_POST['kassa'] ?? null;
 $toiminto = $_POST['toiminto'] ?? null;
 $muutto = $_POST['muutto'] ?? null;
 $show = $_POST['show'] ?? null;
@@ -45,47 +46,8 @@ foreach ($results as $row) {
 
 $results = $conn->query("SELECT * FROM vero;");
 foreach ($results as $row) {
-    $verot[$row['id']] = $row['prosentti'];
+    $verot[$row['vero_id']] = $row['prosentti'];
 }
-
-echo "
-    <style>
-    .row {
-        display: flex;
-        gap: 10px;
-        margin-top: 10px;
-    }
-
-    .box {
-        width: 33%;
-        height: 25%;
-        background: #3e3c3c;
-        display: flex;
-        flex-direction: column;
-        align-items: left;
-        text-align: left;
-        border: 1px solid black;
-        border-radius: 10px;
-        padding: 10px;
-    }
-    
-    .box:hover {
-        background: #8a8787;
-    }
-
-    table, th, td {
-       border:1px solid white;
-       padding: 3px;
-    }
-
-    img {
-        border-radius: 10px;
-        cursor: pointer;
-    }
-    th {
-        cursor: pointer;
-    }
-    </style>";
 
 if ($toiminto == 'l_t') {
     echo "<form id='lT' method='post'>";
@@ -122,7 +84,7 @@ if ($toiminto == 'l_t') {
     </form>";
     takaisin();
 } else if ($toiminto == 't_t') {
-    lista($trs, $conn, "SELECT * FROM tuotteet ORDER BY id ASC");
+    lista($trs, $conn, "SELECT * FROM tuotteet LEFT JOIN varasto ON tuotteet.id = varasto.tuotteet_id ORDER BY tuotteet.id ASC");
     echo "<br>";
     takaisin();
 } else if ($toiminto == 't_tr') {
@@ -157,7 +119,7 @@ if ($m_tr) {
     takaisin();
 }
 if ($tr_id) {
-    lista($trs, $conn, "SELECT * FROM tuotteet WHERE tuoteryhma_id = $tr_id ORDER BY id ASC");
+    lista($trs, $conn, "SELECT * FROM tuotteet LEFT JOIN varasto ON tuotteet.id = varasto.tuotteet_id WHERE tuotteet.tuoteryhma_id = $tr_id ORDER BY tuotteet.id ASC");
     echo "<br>";
     takaisin();
 }
@@ -176,17 +138,30 @@ if ($muutto) {
 }
 
 if ($haku) {
-    $tuotteet = 0;
-    $results = $conn->query("SELECT * FROM tuotteet;");
+    $haku_sana = strtolower($haku);
+    $tuotteet = array();
+    $hinta = array();
+    $tuoteryhma = array();
+    $kuva = array();
+    $varastossa = array();
+    $ids = array();
+    $results = $conn->query("SELECT * FROM tuotteet LEFT JOIN varasto ON tuotteet.id = varasto.tuotteet_id;");
     foreach ($results as $row) {
-        if (strtolower($row['nimi']) == strtolower($haku) || $row['ean'] == $haku) {
-            tuotteet([$row['nimi']], $row['hinta'], $row['tuoteryhma_id'], $row['kuva'], $verot, $conn);
-            $tuotteet = 1;
+        $nimi = strtolower($row['nimi']);
+        $ean = $row['ean'];
+        if (str_contains($nimi, $haku_sana) || str_contains($ean, $haku_sana)) {
+            $tuotteet[] = $row['nimi'];
+            $hinta[] = $row['hinta'];
+            $tuoteryhma[] = $row['tuoteryhma_id'];
+            $kuva[] = $row['kuva'];
+            $varastossa[] = $row['varastossa'];
+            $ids[] = $row['id'];
         }
     }
-    if ($tuotteet == 0) {
+    if (count($tuotteet) < 1) {
         echo "Tuotteita ei löytynyt hakusanalla: " . $haku;
-        $tuotteet = 0;
+    } else {
+        tuotteet($tuotteet, $hinta, $tuoteryhma, $kuva, $verot, $varastossa, $ids, $conn);
     }
 }
 
@@ -195,20 +170,86 @@ if ($koti) {
     $hinta = array();
     $tuoteryhma = array();
     $kuva = array();
-    $results = $conn->query("SELECT * FROM tuotteet;");
+    $varastossa = array();
+    $ids = array();
+    $results = $conn->query("SELECT * FROM tuotteet LEFT JOIN varasto ON tuotteet.id = varasto.tuotteet_id;");
     foreach ($results as $row) {
         $tuotteet[] = $row['nimi'];
         $hinta[] = $row['hinta'];
         $tuoteryhma[] = $row['tuoteryhma_id'];
         $kuva[] = $row['kuva'];
+        $varastossa[] = $row['varastossa'];
+        $ids[] = $row['id'];
     }
-    tuotteet($tuotteet, $hinta, $tuoteryhma, $kuva, $verot, $conn);
+    tuotteet($tuotteet, $hinta, $tuoteryhma, $kuva, $verot, $varastossa, $ids, $conn);
 }
 
 if ($show) {
     lista($trs, $conn, $show);
     echo "<br>";
     takaisin();
+}
+
+if ($kassa) {
+    header('Content-Type: application/json');
+    $kassa = json_decode($kassa, true);
+
+    $id = $kassa[0];
+    $maara = $kassa[1];
+    
+    if (is_numeric($maara)) {
+        $results = $conn->query("SELECT * FROM tuotteet LEFT JOIN varasto ON tuotteet.id = varasto.tuotteet_id WHERE tuotteet.id = $id;");
+        foreach ($results as $row) {
+            $varastossa = $row['varastossa'];
+            $nimi = $row['nimi'];
+            $hinta = $row['hinta'];
+            $tr_id = $row['tuoteryhma_id'];
+        }
+    }
+
+    if ($varastossa < $maara) {
+        echo json_encode([
+            'nimi' => $nimi,
+            'varastossa' => false
+        ]);
+    } else {
+        $results = $conn->query("SELECT * FROM tuoteryhmat LEFT JOIN vero ON tuoteryhmat.vero_id = vero.vero_id WHERE tuoteryhmat.id = $tr_id;");
+        foreach ($results as $row) {
+            $prosentti = $row['prosentti'];
+        }
+
+        $results = $conn->query("SELECT * FROM tuoteryhmat LEFT JOIN myynti ON tuoteryhmat.myynti_id = myynti.myynti_id WHERE tuoteryhmat.id = $tr_id;");
+        foreach ($results as $row) {
+            $myynti = $row['myynti'];
+        }
+        
+        $hinta = round($hinta + ($hinta * ($prosentti / 100)), 2);
+        if ($myynti === 'kg') {
+            $loppu_hinta = round($hinta * $maara / 1000, 2);
+        } else {
+            $loppu_hinta = round($hinta * $maara, 2);
+        }
+
+        echo json_encode([
+            'id' => $id,
+            'nimi' => $nimi,
+            'maara' => $maara,
+            'varastossa' => true,
+            'myynti' => $myynti,
+            'hinta' => $hinta,
+            'loppu_hinta' => $loppu_hinta
+        ]);
+    }
+}
+
+if ($osto) {
+    header('Content-Type: application/json');
+    $osto = json_decode($osto, true);
+
+    $id = $osto[0];
+    $maara = $osto[1];
+
+    $conn->query("UPDATE varasto SET varastossa = (SELECT varastossa FROM varasto WHERE tuotteet_id = $id) - $maara WHERE tuotteet_id = $id;");
 }
 
 function select($name, $label, $sql, $conn, $value = "") {
@@ -238,20 +279,12 @@ function muuta($tuote, $nimi, $id, $tr_id, $ean, $hinta) {
     echo "<button onclick='showData(\"$nimi=$value\")'>Muuta tuotetta</button>";
 }
 
-function maara($min = 0.1, $max = 100) {
-    echo "
-    <div style='display:flex; align-items:center; gap:10px;'>
-        <label for='maara'>Tuote määrä:</label>
-        <input type='number' min='$min' max='$max' name='maara' placeholder='Määrä...'>
-    </div>";
-}
-
-function tuotteet($tuotteet, $hinta, $tuoteryhma, $kuva, $verot, $conn) {
+function tuotteet($tuotteet, $hinta, $tuoteryhma, $kuva, $verot, $varastossa, $id, $conn) {
     $count = 0;
     $prosentti = array();
     $myynti = array();
 
-    $results = $conn->query("SELECT * FROM tuoteryhmat;");
+    $results = $conn->query("SELECT * FROM tuoteryhmat LEFT JOIN myynti ON tuoteryhmat.myynti_id = myynti.myynti_id;");
     foreach ($results as $row) {
         $prosentti[$row['id']] = $verot[$row['vero_id']];
         $myynti[$row['id']] = $row['myynti'];
@@ -260,12 +293,9 @@ function tuotteet($tuotteet, $hinta, $tuoteryhma, $kuva, $verot, $conn) {
     echo "<div class='row'>";
     foreach ($tuotteet as $tuote) {
         $loppu_hinta = round($hinta[$count] + ($hinta[$count] * ($prosentti[$tuoteryhma[$count]] / 100)),2);
-        echo "<div class='box'>" . "<img src='$kuva[$count]'>" . "<br>" . "Tuotteen nimi: " . $tuote . "<br>" . "Tuotteen hinta: " . $loppu_hinta . $myynti[$tuoteryhma[$count]] . "<br>";
-        if ($myynti[$tuoteryhma[$count]] == "€/kg") {
-            maara();
-        } else {
-            maara(1);
-        }
+        $myyntitapa = $myynti[$tuoteryhma[$count]];
+        $vero = $prosentti[$tuoteryhma[$count]];
+        echo "<div class='box' onclick='showModal(\"$kuva[$count]\", \"$id[$count]\", \"$tuote\", \"$loppu_hinta\", \"$hinta[$count]\", \"$myyntitapa\", \"$vero\", \"$varastossa[$count]\")'>" . "<img src='$kuva[$count]'>" . "<br>" . "Tuotteen nimi: " . $tuote . "<br>" . "Tuotteen hinta: " . $loppu_hinta . "€/" . $myyntitapa . "<br>";
         echo "</div>";
         $count++;
         if ($count % 3 === 0) {
@@ -283,12 +313,14 @@ function lista($trs, $conn, $sql) {
     $tr_ids = array();
     $ean  = array();
     $hinta = array();
+    $varastossa = array();
     foreach ($results as $row) {
         $id[] = $row['id'];
         $nimi[] = $row['nimi'];
         $tr_ids[] = $row['tuoteryhma_id'];
         $ean[] = $row['ean'];
         $hinta[] = $row['hinta'];
+        $varastossa[] = $row['varastossa'];
     }
     $parts = explode(" ORDER", $sql);
     $sql = $parts[0];
@@ -303,11 +335,12 @@ function lista($trs, $conn, $sql) {
     
     echo "<table>
         <tr>
-            <th onclick='showData(\"show=$sql ORDER BY id $order\")'>ID</th>
+            <th onclick='showData(\"show=$sql ORDER BY tuotteet.id $order\")'>ID</th>
             <th onclick='showData(\"show=$sql ORDER BY nimi $order\")'>Nimi</th>
             <th onclick='showData(\"show=$sql ORDER BY tuoteryhma_id $order\")'>Tuoteryhmä</th>
             <th onclick='showData(\"show=$sql ORDER BY ean $order\")'>EAN-koodi</th>
             <th onclick='showData(\"show=$sql ORDER BY hinta $order\")'>Hinta</th>
+            <th onclick='showData(\"show=$sql ORDER BY varastossa $order\")'>Varastossa</th>
             <th>Muuta</th>
         </td>";
     for ($a = 0; $a < count($id); $a++) {
@@ -317,6 +350,7 @@ function lista($trs, $conn, $sql) {
             <td>" . $trs[$tr_ids[$a]] . "</td>
             <td>" . $ean[$a] . "</td>
             <td>" . $hinta[$a] . "</td>
+            <td>" . $varastossa[$a] . "</td>
             <td>"; 
         muuta($nimi[$a], "muutto", $id[$a], $tr_ids[$a], $ean[$a], $hinta[$a]);
         echo "</td>
