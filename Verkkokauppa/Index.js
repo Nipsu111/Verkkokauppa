@@ -111,9 +111,11 @@ function closeModal() {
 function osto(id, nimi, hinta, veroton, myynti, vero, varastossa, kuva) {
     let tuote_lista = JSON.parse(localStorage.getItem('tuote_lista'));
     var maara = document.getElementById("maara").value;
+    var tuote_lista_uusi = [];
+
     if (maara != null && maara != '' && maara > 0) {
         if (parseInt(maara) > parseInt(varastossa)) {
-            console.log("Varastossa ei ole tarpeeksi kyseistä tuotetta.");
+            virhe(`Varastossa ei ole tarpeeksi tuotetta: ${nimi}`);
         } else {
             lista = {
                 "id": id,
@@ -127,11 +129,28 @@ function osto(id, nimi, hinta, veroton, myynti, vero, varastossa, kuva) {
                 "kuva": kuva
             }
             if (tuote_lista == null) {
-                tuote_lista = [lista];
+                tuote_lista_uusi = [lista];
             } else {
-                tuote_lista.push(lista);
+                for (tuote of tuote_lista) {
+                    if (tuote.id === lista.id) {
+                        if ((Number(tuote.maara) + Number(lista.maara)) > tuote.varastossa) {
+                            virhe(`Et voi lisätä tuotetta: ${tuote.nimi}, sitä ei ole varastossa tarpeeksi`);
+                        } else {
+                            tuote.maara = Number(tuote.maara) + Number(lista.maara);
+                        }
+
+                        lista.maara = 0;
+                        tuote_lista_uusi.push(tuote);
+                    } else {
+                        tuote_lista_uusi.push(tuote);
+                    }
+                }
+                
+                if (lista.maara != 0) {
+                    tuote_lista_uusi.push(lista);
+                }
             }
-            localStorage.setItem('tuote_lista', JSON.stringify(tuote_lista));
+            localStorage.setItem('tuote_lista', JSON.stringify(tuote_lista_uusi));
         }
     }
 }
@@ -208,7 +227,6 @@ async function kassa() {
     modal.style.display = "block";
     document.getElementById("modal").innerHTML = `
         <div id="modal-content" class="modal-content">
-            <div id="modal-error"></div>
             <span class="close" onclick='closeModal()'>&times;</span>
             <table id="modal-table">
                 <tr>
@@ -224,9 +242,7 @@ async function kassa() {
     for (const tuote of tuote_lista) {
         const data = await fetch_data("kassa", tuote);
         if (data.varastossa === false) {
-            document.getElementById("modal-error").innerHTML +=
-            `Tuotetta: "${data.nimi}" ei ollut tarpeeksi varatossa`;
-            console.log(data.varastossa);
+            virhe(`Varastossa ei ollut tarpeeksi tuotetta: ${data.nimi}`);
         } else {
             if (data.myynti === "kg") {
                 var maara = data.maara / 1000;
@@ -294,34 +310,36 @@ function kuitti() {
     `;
 
     for (tuote of tuote_lista) {
-        if (tuote.myynti === "kg") {
-            var loppu_hinta = (tuote.hinta * Math.floor(tuote.maara) / 1000).toFixed(2);
-            var veroton_hinta = (tuote.veroton * Math.floor(tuote.maara) / 1000).toFixed(2);
-            var tuote_maara = tuote.maara / 1000;
-        } else {
-            var loppu_hinta = (tuote.hinta * Math.floor(tuote.maara)).toFixed(2);
-            var veroton_hinta = (tuote.veroton * Math.floor(tuote.maara)).toFixed(2);
-            var tuote_maara = tuote.maara;
-        }
-        document.getElementById("kuitti").innerHTML += `
-            <tr>
-                <td colspan="4">${tuote.nimi} - ${tuote_maara} ${tuote.myynti} - ${tuote.hinta} €/${tuote.myynti}</td>
-                <td style="text-align: right;">${loppu_hinta}</td>
-            </tr>
-        `;
+        if (tuote.varastossa > tuote.maara) {
+            if (tuote.myynti === "kg") {
+                var loppu_hinta = (tuote.hinta * Math.floor(tuote.maara) / 1000).toFixed(2);
+                var veroton_hinta = (tuote.veroton * Math.floor(tuote.maara) / 1000).toFixed(2);
+                var tuote_maara = tuote.maara / 1000;
+            } else {
+                var loppu_hinta = (tuote.hinta * Math.floor(tuote.maara)).toFixed(2);
+                var veroton_hinta = (tuote.veroton * Math.floor(tuote.maara)).toFixed(2);
+                var tuote_maara = tuote.maara;
+            }
+            document.getElementById("kuitti").innerHTML += `
+                <tr>
+                    <td colspan="4">${tuote.nimi} - ${tuote_maara} ${tuote.myynti} - ${tuote.hinta} €/${tuote.myynti}</td>
+                    <td style="text-align: right;">${loppu_hinta}</td>
+                </tr>
+            `;
 
-        loppu_summa = (Number(loppu_summa) + Number(loppu_hinta)).toFixed(2);
+            loppu_summa = (Number(loppu_summa) + Number(loppu_hinta)).toFixed(2);
 
-        if (alv.indexOf(tuote.vero) === -1) {
-            alv.push(tuote.vero);
-            maara.push(1);
-            veroton.push(veroton_hinta);
-            verollinen.push(loppu_hinta);
-        } else {
-            var index = alv.indexOf(tuote.vero);
-            maara[index] = Number(maara[index]) + 1;
-            veroton[index] = (Number(veroton[index]) + Number(veroton_hinta)).toFixed(2);
-            verollinen[index] = (Number(verollinen[index]) + Number(loppu_hinta)).toFixed(2);
+            if (alv.indexOf(tuote.vero) === -1) {
+                alv.push(tuote.vero);
+                maara.push(1);
+                veroton.push(veroton_hinta);
+                verollinen.push(loppu_hinta);
+            } else {
+                var index = alv.indexOf(tuote.vero);
+                maara[index] = Number(maara[index]) + 1;
+                veroton[index] = (Number(veroton[index]) + Number(veroton_hinta)).toFixed(2);
+                verollinen[index] = (Number(verollinen[index]) + Number(loppu_hinta)).toFixed(2);
+            }
         }
     }
 
@@ -362,4 +380,19 @@ function kuitti() {
             <td style="text-align: right;">${verollinen[0]}</td>
         </tr>
     `;
+}
+
+function virhe(viesti) {
+    error_msg.style.display = "block";
+    document.getElementById('error_msg').innerHTML += `
+        <p>${viesti}</p>
+    `;
+    setTimeout(closeError, 7500);
+}
+
+function closeError() {
+    document.getElementById('error_msg').innerHTML = `
+        <span class="close" onclick='closeError()'>&times;</span>
+    `;
+    error_msg.style.display = "none";
 }

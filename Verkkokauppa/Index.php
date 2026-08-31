@@ -248,8 +248,15 @@ if ($osto) {
 
     $id = $osto[0];
     $maara = $osto[1];
+    
+    $results = $conn->query("SELECT * FROM varastossa WHERE tuotteet_id = $id");
+    foreach($results as $row) {
+        $varastossa = $row['varastossa'];
+    }
 
-    $conn->query("UPDATE varasto SET varastossa = (SELECT varastossa FROM varasto WHERE tuotteet_id = $id) - $maara WHERE tuotteet_id = $id;");
+    if ($varastossa > $maara) {
+        $conn->query("UPDATE varasto SET varastossa = (SELECT varastossa FROM varasto WHERE tuotteet_id = $id) - $maara WHERE tuotteet_id = $id;");
+    }
 }
 
 function select($name, $label, $sql, $conn, $value = "") {
